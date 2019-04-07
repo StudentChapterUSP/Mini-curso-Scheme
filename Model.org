@@ -1,0 +1,167 @@
+* Mini curso Scheme - proposta
+** Abordagem
+   - "Pattern-first" (menos explicacao, mais interacao)
+   - 1 hora "teorica" (vide ponto acima), uma hora pratica (recomenda-se trazer notebooks)
+   - 1 desafio por semana
+** Objetivos: abordar tecnicas e ideias poderosas em programacao funcional:
+   - lambda como first-class citizen, escopo lexico
+   - funcoes de maior ordem e suas aplicacoes na natureza
+   - aspectos computacionais (halting problem, ackerman function)
+   - calculo lambda
+   - recursao e alguns aspectos teoricos (combinators, Y combinator, fundamentos) 
+   - construcao de linguagens (linguagem de Escher)
+   - macros como uma extensao do calculo lambda
+   - programacao logica (miniKanren)
+   - outros caminhos (Common Lisp, Clojure)
+   - aplicacoes (jogos, robotica, mecanica)
+** Bibliografia de base:
+   - trilogia Little Schemer;
+   - Structure and Interpretation of Computer Programs (SICP);
+   - Denotational Semantics, the Scott Strachey Approach
+** Outline:
+   - Ao aprender uma nova linguagem, perguntamos:
+     - 1 quais sao os elementos primitivos da linguagem?
+     - 2 quais sao os meios de combinacao?
+     - 3 quais sao os meios de abstracao?
+   - 1 (elementos primitivos de Scheme):
+     - Numeros (inteiros, racionais, flutuantes), listas, lambdas
+   - 2 
+     - Listas, lambdas
+   - 3
+     - define, lambdas
+
+* Sketch de conteudos no primeiro encontro
+**  Exemplos basicos em listas (nao foram feitos)  
+#+BEGIN_SRC scheme
+  (define atom?
+    (λ (x)
+      (and (not (pair? x))
+           (not (null? x)))))
+
+; (define lat? 
+;; (list of atoms) 
+; (define firsts
+; (define rember 
+; (multirember? 
+;; (rember*?
+; doubly recursive rember
+; (define eqlist?
+#+END_SRC
+
+*** Exemplos basicos em tuplas
+#+BEGIN_SRC scheme
+; (define addtup
+; (define tup+
+; (define value
+; (tup-op
+; (rember-f
+#+END_SRC
+
+**** Acumulador (nao foi feito)
+#+BEGIN_SRC scheme
+(define C
+  (λ (n)
+    (cond
+      ((one? n) 1)
+      (else
+       (cond
+         ((even? n) (C (+ n 2)))
+         (else (C (add1 (x 3 n)))))))))
+#+END_SRC
+
+*** Aspecto computacional (nao foi feito)
+**** Ackerman
+#+BEGIN_SRC scheme
+  (define A
+    (λ (n m)
+      (cond
+        ((zero ? n) (addl m))
+        ((zero ? m) (A (subl n) 1))
+        (else (A (subl n)
+                 (A n (subl m )))))))
+#+END_SRC
+** Primeiro encontro
+*** is a a member of lat (list-of-atoms)?
+#+BEGIN_SRC scheme
+  (define member?
+    (lambda (a lat)
+      (cond
+       ((null? lat) `())
+       (else
+        (or (eq? (car lat) a)
+            (member? a (cdr lat)))))))
+#+END_SRC
+*** how to sum a list of numbers?
+#+BEGIN_SRC scheme
+  ;; we can do like that
+  (define sum-list
+    (lambda (list)
+      (cond
+       ((null? list) 0)
+       (else
+        (+ (car list) (sum-list (cdr list)))))))
+
+  ;; or like that
+  (define sum-list2
+    (lambda (list)
+      (eval (cons '+ list))))
+#+END_SRC
+*** how to sum an integer-indexed series?
+#+BEGIN_SRC scheme
+  (define sum-i
+    (lambda (i term b)
+      (cond
+       ((> i b) 0)
+       (else
+        (+ (term i) (sum-i (+ i 1) term b))))))
+#+END_SRC
+*** how to do a sum over an arbitrarily indexed series?
+#+BEGIN_SRC scheme
+  ;; performs the sum of (term a) for a = (next^n a0) for a <= b
+  ;; "next" yields next index (next "a") and "term" yields value of index a
+  (define sum
+    (lambda (a term next b)
+      (cond
+       ((> a b) 0)
+       (else
+        (+ (term a) (sum (next a) term next b))))))
+  ;; one of "next" (which corresponds more closely to integer indexind) is
+  (define next1
+    (lambda (a) (+ a 1)))
+  ;; one of "term" is
+  (define term1
+    (lambda (a) (* a a)))
+#+END_SRC
+*** we can use that to sum over an integral
+#+BEGIN_SRC scheme
+  ;; does integral of f from a to b with dx
+  ;; by doing the sum dx*(f(a + dx/2) + f(a + dx + dx/2) + ...)
+  (define integral1
+    (lambda (f a b dx)
+      (* (sum (+ a (/ dx 2))                      ;our first "index"
+              (lambda (a) (+ a dx))               ;our "next" function
+              f                                   ;our "term function"
+              b)                                  ;our last term
+         dx)))                        
+
+  ;; one example of "next" function is
+  (define successor
+    (lambda i (+ 1 i)))
+
+  ;; another option for integration would be using Simpson's rule
+  ;; we use "let" to declare local variables. its value is the one of the "value part":
+  ;; 
+  ;; (let ((var1 value1) ... (varn valuen))   <= variable declarations part
+  ;;      some-expression)                    <= value part
+  ;; Simpson's rule is:
+  ;;  dx/3 * (y0 + 4 y1 + 2 y2 + ... + yn)
+  (define integral2
+    (let ((coef (/ dx 3)) (n (/ (- b a) 2)))
+      (* coef
+         (+ (f a)
+            (f b)
+            (sum i
+                 successor
+                 (lambda (j) (* 2 (* (remainder j 2) (f (+ a (* j dx)))))) ;also the same as (lambda (j) (*2 (remainder j 2) (f (+ a (* j dx)))))
+                 n)))))
+#+END_SRC
