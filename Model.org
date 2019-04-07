@@ -88,8 +88,8 @@
       (cond
        ((null? lat) `())
        (else
-        (or (eq? (car lat) a)
-            (member? a (cdr lat)))))))
+        (or (eq? (first lat) a)
+            (member? a (rest lat)))))))
 #+END_SRC
 *** how to sum a list of numbers?
 #+BEGIN_SRC scheme
@@ -99,7 +99,7 @@
       (cond
        ((null? list) 0)
        (else
-        (+ (car list) (sum-list (cdr list)))))))
+        (+ (first list) (sum-list (rest list)))))))
 
   ;; or like that
   (define sum-list2
